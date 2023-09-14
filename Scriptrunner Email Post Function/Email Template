@@ -1,0 +1,200 @@
+<% //Components
+    //Main Email Fields
+        def notificationValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Notification Email")?.getValue(issue)?.toString() // Type of notification
+
+        def summaryValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Notification Summary")?.getValue(issue)?.toString()
+        def userImpValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("User Impact")?.getValue(issue)?.toString() // How will this affect me
+        def actionValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("User Action Select")?.getValue(issue)?.toString()
+        def actionDscValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("User Action")?.getValue(issue)?.toString()
+        def taskDescConValue = (com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Task Description")?.getValue(issue)?.toString()?.replaceAll("\n", "<br>"). replaceAll(" ", "&nbsp;")) // Maintenance/Event description
+        def affectedCusValue = (com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Affected Customers")?.getValue(issue)?.toString()?.replaceAll("\\[|\\]", ""))
+        def originalIssueKey = issue.key.replaceAll("[^0-9]", "")
+    //Start Times
+        def startValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Start Time")?.getValue(issue)
+        def upStartValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Update Start Time")?.getValue(issue)
+        def corStartValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Correction Start Time")?.getValue(issue)
+
+    //End Times
+        def endTimeValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("End Time")?.getValue(issue)
+        def upEndValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Update End Time")?.getValue(issue)
+        def corEndValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Correction End Time")?.getValue(issue)
+
+    //Update Fields
+        def updateSelectValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Business Notification Update Select")?.getValue(issue)?.toString()
+        def upActionValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Update User Action")?.getValue(issue)
+        def upuserImpValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Update User Impact")?.getValue(issue)
+        def updateValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Email Update")?.getValue(issue)
+        def updateValue2 = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Email Update 2")?.getValue(issue)
+        def updateValue3 = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Email Update 3")?.getValue(issue)
+        def updateValue4 = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Email Update 4")?.getValue(issue)
+        def updateValue5 = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Email Update 5")?.getValue(issue)
+    //Resolution Fields
+        def resolvedValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Resolve")?.getValue(issue)
+
+    //Correction Fields
+        def corUserActionSelectValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Correction User Action Select")?.getValue(issue)?.toString()
+        def corDesValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Correction Description")?.getValue(issue)
+        def correctValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Business Notification Correction")?.getValue(issue)?.toString()
+        def corUserImpactValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Correction User Impact")?.getValue(issue)
+        def corUserActionValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Correction User Action")?.getValue(issue)?.toString()
+
+    %>
+<%//Daylight Savings Modifier
+    def timeZone
+    def currentTime = Calendar.getInstance()
+    def currentYear = currentTime.get(Calendar.YEAR)
+    def startMarch = Calendar.getInstance()
+    startMarch.set(currentYear, Calendar.MARCH, 1)
+    def secondSunday = startMarch
+    while (secondSunday.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+        secondSunday.add(Calendar.DAY_OF_MONTH, 1)
+    }
+    while (secondSunday.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+    secondSunday.add(Calendar.DAY_OF_MONTH, 1)
+    }
+    def firstNovember = Calendar.getInstance()
+    firstNovember.set(currentYear, Calendar.NOVEMBER, 1)
+    while (firstNovember.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+    firstNovember.add(Calendar.DAY_OF_MONTH, 1)
+    }
+    if (currentTime.after(secondSunday) && currentTime.before(firstNovember)) {
+    timeZone = "CST"
+    } else {
+    timeZone = "CDT"
+    }
+    %>
+
+<span style="font-family: Calibri Light; color: black; font-size: 37px;">
+<% // Notification Overview
+        def overviewMappings=[
+        "Proactive Maintenance":"{notificationValue} {status}",
+        "Emergency Maintenance": "{notificationValue} {status}",
+        "Unplanned Event": "{notificationValue} {status}",
+        "Service Degradation": "{notificationValue} {status}",
+        "Hotfix": "Informational Notification {status}",
+        "Holiday Deployment Delay": "Informational Notification {status}"
+        ]
+        // Determine the status based on conditions
+        def status = ""
+        if (correctValue == "Yes") {
+            status = "<span style='color: red; font-family: Calibri Light; font-size: 30px; margin-left: 5px;'> - CORRECTION</span>"
+        } else if (resolvedValue != null) {
+            status = "<span style='color: red; font-family: Calibri Light; font-size: 30px; margin-left: 5px;'> - RESOLVED</span>"
+        } else if (updateSelectValue == "Yes" && resolvedValue == null) {
+            status = "<span style='color: red; font-family: Calibri Light; font-size: 30px; margin-left: 5px;'> - UPDATE</span>"
+        }
+        // Retrieve the output string from the map
+        def outputString = overviewMappings.get(notificationValue)
+        if (outputString) {
+        // Replace placeholders with actual values
+            outputString = outputString.replace("{notificationValue}", notificationValue)
+                               .replace("{status}", status)
+             out << outputString
+        }
+    %>
+</span><br>
+<span style="font-family: Calibri; color: DarkSlateGray; font-size: 15px;">
+The Solarity Health Information Solutions support team would like to make you aware of an event taking place.<br>
+Please review the following information.
+</span><br><br>
+<i><span style="font-family:Calibri;font-size: 15px;;">
+<%// Summary
+    def summaryPrefix = (notificationValue == "Holiday Deployment Delay") ? "Bi-weekly Solarity Software deployment to Solarity hosted components."
+                   : (notificationValue == "Hotfix") ? "${notificationValue} deployment for ${summaryValue}."
+                   : "${notificationValue} for ${summaryValue}."
+
+        out << "Summary: ${summaryPrefix}"
+        %>
+<br>
+<% // event vs maintenance
+    if (notificationValue == "Proactive Maintenance" || notificationValue == "Holiday Deployment Delay") {
+        out << "Maintenance Description: " + (corDesValue != null ? "<del>" + taskDescConValue + "</del> "  : taskDescConValue);
+    } else {
+        out << "Event Description: " + (corDesValue != null ? "<del>" + taskDescConValue + "</del>" : taskDescConValue);
+    }
+    %>
+</span></i>
+<% // Correction
+    if (corDesValue != null){
+        out << "<i><span style='color: red; font-family: Calibri Light; font-size: 15px;'>CORRECTION: " + corDesValue + "</span></i>"
+        }
+    %>
+<br>
+<%//Update
+    def updateValues = [updateValue, updateValue2, updateValue3, updateValue4, updateValue5]
+    def hasResolvedValue = resolvedValue != null
+
+    for (int i = 0; i < updateValues.size(); i++) {
+        def currentValue = updateValues[i]
+        def nextValue = (i < updateValues.size() - 1) ? updateValues[i + 1] : null
+    
+    if (currentValue != null) {
+        if (hasResolvedValue) {
+            out << "<i><s><span style='color: red; font-family:Calibri;font-size: 15px;'>Update: " + currentValue + "</span></s></i><br>" //
+        } else if (nextValue != null) {
+            out << "<i><s><span style='color: red; font-family:Calibri;font-size: 15px;'>Update: " + currentValue + "</span></s></i><br>"
+        } else {
+            out << "<i><span style='color: red; font-family:Calibri;font-size: 15px;'>Update: " + currentValue + "</span></i><br>"
+        }
+        }
+    }
+        if (hasResolvedValue) {
+            out << "<i><span style='color: red; font-family:Calibri;font-size: 15px;'>Resolved: " + resolvedValue + "</span></i><br>"
+        }
+
+    %>
+ <br>
+
+<span style='color: SteelBlue; font-family: Calibri Light; font-size: 21px;'>Start Time</span><br>
+<% //Start Time
+        if (startValue){
+        out <<  (corStartValue !=null ? "<s>" : "") + "<span style='color: " + (upStartValue !=null ? "red" : "black") + "; font-family: Calibri; font-size: 15px;'> ${cfValues.'Start Time'.format("EEEE, MMMM d, yyyy, hh:mm a")} ${timeZone}" + (corStartValue !=null ? "</s><span style='color: red; font-family: Calibri; font-size: 15px;'> ${cfValues.'Correction Start Time'.format("EEEE, MMMM d, yyyy, hh:mm a")} ${timeZone}</span>" : "") + "<br>"
+    }
+    %>
+
+<span style='color: SteelBlue; font-family: Calibri Light; font-size: 21px;'>End Time</span><br>
+<% //End time
+        if (endTimeValue !=null){
+            out <<  (corEndValue !=null ? "<s>" : "") + "<span style='color: " + (upEndValue !=null ? "red" : "black") + "; font-family: Calibri; font-size: 15px;'>" + (endTimeValue !=null ? "${cfValues.'End Time'.format("EEEE, MMMM d, yyyy, hh:mm a")} ${timeZone}" : "TBD") + (corEndValue !=null ? "</s><span style='color: red; font-family: Calibri; font-size: 15px;'> ${cfValues.'Correction End Time'.format("EEEE, MMMM d, yyyy, hh:mm a")} ${timeZone}</span>" : "") + "<br>"
+    }
+    %>
+<br><br>
+<% // How will this affect me
+    if (notificationValue != "Unplanned Event" && notificationValue != "Service Degradation" ){
+        out << "<span style='color: SteelBlue; font-family: Calibri Light; font-size: 17px;'>How will this affect me?</span>" + "<br>" + (corUserImpactValue !=null ? "<s>" : "") +  "<span style='color: " + (upuserImpValue != null ? "red" : "black") + "; font-family: Calibri; font-size: 15px;'>" + userImpValue + "</span>" +  (corUserImpactValue !=null ? "</s> <span style='color: red; font-family: Calibri; font-size: 15px;'>" + corUserImpactValue + "</span>  <br>" : "<br>")
+    }
+    %>
+<span style='color: SteelBlue; font-family: Calibri Light; font-size: 17px;'>Does this require any action on my part?</span><br>
+<%// User Action 
+    if (actionValue) {
+        String textColor = (upActionValue == null) ? "black" : "red";
+        String actionText = (actionValue == "Yes") ? "Yes. " + actionDscValue :
+                        (actionValue == "No") ? "No action is required." :
+                        (actionValue == "TBD") ? "TBD." : ""; 
+        String corActionText = (corUserActionSelectValue == "Yes") ? "Yes. " + corUserActionValue : 
+                        (corUserActionSelectValue == "No") ? "No action is required." :
+                        (corUserActionSelectValue == "TBD") ? "TBD." : corUserActionValue;
+        String strike = (corUserActionSelectValue != null) ? "<s>": ""
+        String strikeEnd = (corUserActionSelectValue != null) ? "</s>" : ""  ;
+    
+        out << strike + "<span style='color: " + textColor + "; font-family: Calibri; font-size: 15px;'>" + actionText + "</span>" + strikeEnd
+    if (corUserActionSelectValue != null){
+        out << "&nbsp; <span style='color: red; font-family: Calibri; font-size: 15px;'>" + corActionText + "</span>";
+        }
+    }
+    %>
+<br><br>
+<span style='color: SteelBlue; font-family: Calibri Light; font-size: 17px;'>Who do I contact if I have questions about this notification?</span><br>
+<span style='font-family: Calibri; font-size: 15px; margin-bottom: 0px;'> The Solarity Health Information Solutions support team is committed to providing consistently satisfying service and we appreciate your participation.<br>
+If you have any questions about this notification please make use of one of the provided options.</span><br><br>
+<span style='font-family: Calibri; font-size: 15px; margin-bottom: 0px;'>Support hours are Monday-Friday 7:00 AM CDT to 7:00 PM CDT. Please include a phone call with any urgent after-hours support tickets. </span><br>
+<span style='font-family: Calibri; font-size: 15px;'>  &nbsp; &nbsp; &nbsp; •  Phone: <a href="tel:8662259885">(866) 225-9885</a><br></span>
+<span style='font-family: Calibri; font-size: 15px;'>  &nbsp; &nbsp; &nbsp; •  Support Portal: <a href="http://customerservice.edcohis.com"> http://customerservice.edcohis.com</a><span><br>
+<span style='font-family: Calibri; font-size: 15px;'>  &nbsp; &nbsp; &nbsp; •  Email: <a href="mailto:support@solarityhealth.com"> support@solarityhealth.com</a></li></span><br><br>
+<%//Solarity image base64
+%>
+<img src="data:image/png;base64,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
+")} alt="Solarity Health" style="max-width: 100%;"> <br>
+<%//Original issue key only numbers
+    out << "<span style='font-family: Calibri; color: DarkGray; font-size: 15px;'>" + originalIssueKey + "</span><br>"
+    %>

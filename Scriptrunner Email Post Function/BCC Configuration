@@ -1,0 +1,19 @@
+import com.atlassian.jira.component.ComponentAccessor
+// Get the "Bcc.." custom field
+    def multiSelectAddressesCF = ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Bcc..")
+
+    // Check if the custom field value is not empty
+    if (issue.getCustomFieldValue(multiSelectAddressesCF)) {
+
+    // Retrieve the email addresses from the custom field
+    def recipients = issue.getCustomFieldValue(multiSelectAddressesCF)?.collect {
+        it.emailAddress
+    }?.join(",")
+
+    // BCC Email List
+    mail.setBcc(recipients)
+
+    } else {
+    // Custom field is empty, log the condition
+    log.warn("Skipping BCC setting because the 'Bcc..' custom field is empty.")
+    }

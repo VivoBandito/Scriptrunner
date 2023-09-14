@@ -1,0 +1,33 @@
+<%// components
+    def notificationValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Notification Email")?.getValue(issue)?.toString()
+    def resolvedValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Resolve")?.getValue(issue)
+    def updateValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Business Notification Update Select")?.getValue(issue)?.toString()
+    def correctValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Business Notification Correction")?.getValue(issue)?.toString()
+    def summaryValue = com.atlassian.jira.component.ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("Notification Summary")?.getValue(issue)?.toString()
+// Notification Mapping
+    def notificationMappings = [
+    "Proactive Maintenance":"Notification - {notificationValue} - {summaryValue}{status}",
+    "Emergency Maintenance":"Notification - {notificationValue} - {summaryValue}{status}",
+    "Unplanned Event":"Notification - {notificationValue} - {summaryValue}{status}",
+    "Service Degradation":"Notification - {notificationValue} - {summaryValue}{status}",
+    "Hotfix":"Notification - Informational - Hotfix{status}",
+    "Holiday Deployment Delay":"Notification - Informational - Software Deployment Delay{status}"
+    ]
+// Status Conditions
+    def status = ""
+    if (correctValue == "Yes") {
+        status = " - CORRECTION"
+    } else if (resolvedValue != null) {
+        status = " - RESOLVED"
+    } else if (updateValue == "Yes" && resolvedValue == null) {
+     status = " - UPDATE"
+    }
+// Retrieve the output string from the map
+    def outputString = notificationMappings.get(notificationValue)
+    if (outputString) {
+// Replace placeholders with actual values
+    outputString = outputString.replace("{notificationValue}", notificationValue)
+                               .replace("{summaryValue}", summaryValue)
+                               .replace("{status}", status)
+    out << outputString
+    }%>
